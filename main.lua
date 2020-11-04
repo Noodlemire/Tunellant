@@ -54,8 +54,12 @@ function love.load()
 	core.new_player()
 	controls.init()
 
-	for x = 1, 16 do
-		for y = 1, 16 do
+	local x = 1
+
+	while x <= 16 do
+		local y = 1
+
+		while y <= 16 do
 			if utils.distance({x=x, y=y}, {x=8.5, y=8.5}) > 3 then
 				local i = math.random(1, 5)
 
@@ -73,7 +77,11 @@ function love.load()
 			else
 				core.terrain.grid(x, y)
 			end
+
+			y = y + 0.8
 		end
+
+		x = x + 0.8
 	end
 end
 
@@ -86,6 +94,14 @@ function love.update(dt)
 end
  
 function love.draw()
+	local width = love.graphics.getWidth()
+	local height = love.graphics.getHeight()
+
+	--rotate around the center of the screen according to the player's direction
+	love.graphics.translate(width/2, height/2)
+	graphs.rotate(-core.player:get_yaw() * math.pi / 180)
+	love.graphics.translate(-width/2, -height/2)
+
 	for v, t in terra.v_iterate() do
 		t:draw(graphs, v)
 	end
@@ -101,6 +117,11 @@ function love.draw()
 			text = 0
 		end
 	end
+
+	--Reverse the rotation so that UI elements don't turn around as well.
+	love.graphics.translate(width/2, height/2)
+	graphs.rotate(core.player:get_yaw() * math.pi / 180)
+	love.graphics.translate(-width/2, -height/2)
 
 	graphs.print(text)
 end

@@ -27,15 +27,28 @@ function this.init()
 	this.down = 'down'
 	this.left = 'left'
 	this.right = 'right'
+	this.sprint = 'w'
+	this.sneak = 's'
+	this.r_left = 'a'
+	this.r_right = 'd'
 
 	local buttonMap = 
 	{
-		--[button] = function
+		--[button] = function()
+		["-"] = function()
+			core.scale = math.max(1, core.scale - 1)
+		end,
+		["="] = function()
+			core.scale = core.scale + 1
+		end,
+		["+"] = function()
+			core.scale = core.scale + 1
+		end,
 	}
 
 	local unButtonMap = 
 	{
-		--[button] = function
+		--[button] = function()
 	}
 
 	function this.process(key)
@@ -71,5 +84,13 @@ function this.init()
 
 	function this.joystickY()
 		return makejoystick(this.down, this.up)
+	end
+
+	function this.joystickS()
+		return makejoystick(this.sneak, this.sprint)
+	end
+
+	function this.joystickR()
+		return makejoystick(this.r_left, this.r_right)
 	end
 end

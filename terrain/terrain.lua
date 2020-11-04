@@ -37,41 +37,50 @@ local static = {
 		if self:get_image() then
 			local x, y, z = v.x, v.y, math.ceil(v.z / 2)
 
+			local d1 = not core.terrain.v_get(x + 1, y, v.z)
+			local d2 = not core.terrain.v_get(x - 1, y, v.z)
+			local d3 = not core.terrain.v_get(x, y + 1, v.z)
+			local d4 = not core.terrain.v_get(x, y - 1, v.z)
+			local d5 = not core.terrain.v_get(x, y, v.z + 1)
+
+			if not (d1 or d2 or d3 or d4 or d5) then return end
+
 			local height_offset = 1 + 0.1 * z
 			local depth_offset = height_offset - 0.1
 
 			local rel_x, rel_y = x * 16 * core.scale, y * 16 * core.scale
 
-			local top_x = (rel_x - core.player:get_pos().x) * height_offset + canvas.getWidth() / 2 - 8
-			local top_y = (rel_y - core.player:get_pos().y) * height_offset + canvas.getHeight() / 2 - 8
+			local top_x = (rel_x - core.player:get_pos().x * core.scale) * height_offset + canvas.getWidth() / 2 - 8
+			local top_y = (rel_y - core.player:get_pos().y * core.scale) * height_offset + canvas.getHeight() / 2 - 8
+
+			local t_x, t_y = 0, 0
+			local h2 = 16 * height_offset * core.scale
 
 			if v.z % 2 == 1 then
-				local bot_x = (rel_x - core.player:get_pos().x) * depth_offset + canvas.getWidth() / 2 - 8
-				local bot_y = (rel_y - core.player:get_pos().y) * depth_offset + canvas.getHeight() / 2 - 8
+				local bot_x = (rel_x - core.player:get_pos().x * core.scale) * depth_offset + canvas.getWidth() / 2 - 8
+				local bot_y = (rel_y - core.player:get_pos().y * core.scale) * depth_offset + canvas.getHeight() / 2 - 8
 
-				local t_x, t_y = 0, 0
-				local b_x, b_y = (bot_x - top_x) * 0.9 / core.scale, (bot_y - top_y) * 0.9 / core.scale --1: 0.9 --2: 0.45 --3: 0.3 --4: 0.225
+				local b_x, b_y = (bot_x - top_x), (bot_y - top_y)
+				local h1 = 16 * depth_offset * core.scale
 
-				local h2 = 16 * (height_offset - 0.1 * z)
-				local h1 = 16 * (depth_offset - 0.1 * z + 0.01) --1: 0.09 --2: 0.19 --3: 0.29
-
-				if rel_x > core.player:get_pos().x and not core.terrain.v_get(x - 1, y, v.z) then
+				if d2 and rel_x > core.player:get_pos().x * core.scale then
 					canvas.draw(quadrangle(self:get_image(), b_x, b_y, b_x, b_y + h1, t_x, t_y + h2, t_x, t_y),
-						top_x, top_y, 0, core.scale * height_offset, core.scale * height_offset)
-				elseif rel_x + 16 * core.scale < core.player:get_pos().x and not core.terrain.v_get(x + 1, y, v.z) then
+						top_x, top_y, 0)
+				elseif d1 and rel_x + 16 * core.scale < core.player:get_pos().x * core.scale then
 					canvas.draw(quadrangle(self:get_image(), b_x + h1, b_y, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x + h2, t_y),
-						top_x, top_y, 0, core.scale * height_offset, core.scale * height_offset)
+						top_x, top_y, 0)
 				end
 
-				if rel_y > core.player:get_pos().y and not core.terrain.v_get(x, y - 1, v.z) then
+				if d4 and rel_y > core.player:get_pos().y * core.scale then
 					canvas.draw(quadrangle(self:get_image(), b_x + h1, b_y, b_x, b_y, t_x, t_y, t_x + h2, t_y),
-						top_x, top_y, 0, core.scale * height_offset, core.scale * height_offset)
-				elseif rel_y + 16 * core.scale < core.player:get_pos().y and not core.terrain.v_get(x, y + 1, v.z) then
+						top_x, top_y, 0)
+				elseif d3 and rel_y + 16 * core.scale < core.player:get_pos().y * core.scale then
 					canvas.draw(quadrangle(self:get_image(), b_x, b_y + h1, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x, t_y + h2),
-						top_x, top_y, 0, core.scale * height_offset, core.scale * height_offset)
+						top_x, top_y, 0)
 				end
-			else
-				canvas.draw(self:get_image(), top_x, top_y, 0, core.scale * height_offset, core.scale * height_offset)
+			elseif d5 then
+				canvas.draw(quadrangle(self:get_image(), t_x, t_y + h2, t_x + h2, t_y + h2, t_x + h2, t_y, t_x, t_y),
+						top_x, top_y, 0)
 			end
 		end
 	end,
@@ -115,11 +124,12 @@ function core.terrain.new(name, image, hardness, x, y, height)
 		__metatable = {}
 	})
 
-	map.set({x=x, y=y, z=1}, terrain)
+	map.set({x=x, y=y, z=height}, terrain)
 	vmap.set({x=x, y=y, z=height * 2}, terrain)
 	if height > 0 then
 		vmap.set({x=x, y=y, z=height * 2 - 1}, terrain)
 	end
+
 	return terrain
 end
 

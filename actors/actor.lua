@@ -54,11 +54,14 @@ local static = {
 	get_pos = function(self)
 		return rawget(self, "pos")
 	end,
+	get_yaw = function(self)
+		return rawget(self, "yaw")
+	end,
 
-	move = function(self, dir)
+	move = function(self, dist, dir)
 		local pos = {x = self:get_pos().x, y = self:get_pos().y}
-		pos.x = pos.x + tonumber(dir.x)
-		pos.y = pos.y + tonumber(dir.y)
+		pos.x = pos.x + dist * core.utils.d_cos((dir or self:get_yaw()))
+		pos.y = pos.y + dist * core.utils.d_sin((dir or self:get_yaw()))
 		self:set_pos(pos)
 
 		return self
@@ -78,6 +81,11 @@ local static = {
 		rawset(self:get_pos(), "y", tonumber(pos.y or self:get_pos().y))
 	end,
 
+	set_yaw = function(self, yaw)
+		yaw = tonumber(yaw) % 360
+		rawset(self, "yaw", yaw)
+	end,
+
 	newindex = function()
 		error("Error: Attempt to directly set a value in an actor object. Please call one of the provided functions instead.")
 	end,
@@ -94,6 +102,7 @@ function core.actor.new(name, image, x, y, properties, functions, init_func)
 		__newindex = static.newindex,
 		__metatable = {},
 	})
+	properties.yaw = properties.yaw or 0
 	properties.id = #actors + 1
 
 	properties.max_hp = properties.max_hp or 1
@@ -109,9 +118,11 @@ function core.actor.new(name, image, x, y, properties, functions, init_func)
 	functions.get_max_hp = functions.get_max_hp or static.get_max_hp
 	functions.get_name = functions.get_name or static.get_name
 	functions.get_pos = functions.get_pos or static.get_pos
+	functions.get_yaw = functions.get_yaw or static.get_yaw
 	functions.move = functions.move or static.move
 	functions.set_hp = functions.get_hp or static.set_hp
 	functions.set_pos = functions.set_pos or static.set_pos
+	functions.set_yaw = functions.set_yaw or static.set_yaw
 
 	local actor = setmetatable(properties, {
 		__index = functions,

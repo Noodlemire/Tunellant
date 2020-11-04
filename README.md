@@ -11,6 +11,14 @@ You can use the arrow keys to move the camera.
 
 In the future, this game will be about being stuck underground, gathering resources and managing limited physical space to protect yourself from harm and your treasures from theft. Inventory space will also be limited to 10 items total, but each inventory slot also automatically counts as equipment to boost your attack, defense, or mining power. The player's character will be an ant that is stuck underground, trapped on all sides by material that gets stronger and harder the futher it is from the center. The outermost wall will be titanium, and the end goal will be to find a way to break through it and escape into the outside world.
 
+Controls:
+* Arrow keys: move/strafe
+* A/S: Turn left/right
+* W: Hold to move/turn faster
+* S: Hold to move/turn slower
+* -: Zoom out
+* =/+: Zoom in (= is used because {shift =} can equate to +)
+
 -------------------------------------------------------------------------------------------------------------
 Dependencies
 -------------------------------------------------------------------------------------------------------------

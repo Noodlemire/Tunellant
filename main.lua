@@ -1,27 +1,3 @@
-core = {}
-
-math.randomseed(os.time())
-math.random()
-
-dofile("utils.lua")
-dofile("assets.lua")
-dofile("controls.lua")
-
-dofile("actors/actor.lua")
-dofile("actors/player.lua")
-
-dofile("terrain/smartVectorTable.lua")
-dofile("terrain/terrain.lua")
-
-local utils = core.utils
-local assets = core.assets
-local controls = core.controls
-
-local actor = core.actor
-local terra = core.terrain
-local graphs = love.graphics
-graphs.setDefaultFilter("nearest")
-
 --[[
 Tunnellant
 Copyright (C) 2020 Noodlemire
@@ -41,13 +17,41 @@ License along with this library; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 --]]
 
+core = {}
+
+math.randomseed(os.time())
+math.random()
+
+local load = function(f)
+	love.filesystem.load(f)()
+end
+
+load("utils.lua")
+load("assets.lua")
+load("controls.lua")
+
+load("actors/actor.lua")
+load("actors/player.lua")
+
+load("terrain/smartVectorTable.lua")
+load("terrain/terrain.lua")
+
+local utils = core.utils
+local assets = core.assets
+local controls = core.controls
+
+local actor = core.actor
+local terra = core.terrain
+local graphs = love.graphics
+graphs.setDefaultFilter("nearest")
+
 core.paused = false
 
 local TEXT_PERIOD = 100
 local doText = TEXT_PERIOD
 local text = "Load complete."
 
-core.scale = 4
+core.scale = 2
 
 function love.load()
 	assets.load()
@@ -56,10 +60,10 @@ function love.load()
 
 	local x = 1
 
-	while x <= 16 do
+	while x <= 32 do
 		local y = 1
 
-		while y <= 16 do
+		while y <= 32 do
 			if utils.distance({x=x, y=y}, {x=8.5, y=8.5}) > 3 then
 				local i = math.random(1, 5)
 
@@ -78,10 +82,10 @@ function love.load()
 				core.terrain.grid(x, y)
 			end
 
-			y = y + 0.8
+			y = y + 0.9
 		end
 
-		x = x + 0.8
+		x = x + 0.9
 	end
 end
 
@@ -102,6 +106,12 @@ function love.draw()
 	graphs.rotate(-core.player:get_yaw() * math.pi / 180)
 	love.graphics.translate(-width/2, -height/2)
 
+	local atan = core.utils.d_atan(0, -height/3) + core.player:get_yaw()
+	local c = -height/3 * core.utils.d_cos(atan)
+	local s = -height/3 * core.utils.d_sin(atan)
+
+	love.graphics.translate(c, s)
+
 	for v, t in terra.v_iterate() do
 		t:draw(graphs, v)
 	end
@@ -117,6 +127,8 @@ function love.draw()
 			text = 0
 		end
 	end
+
+	love.graphics.translate(-c, -s)
 
 	--Reverse the rotation so that UI elements don't turn around as well.
 	love.graphics.translate(width/2, height/2)

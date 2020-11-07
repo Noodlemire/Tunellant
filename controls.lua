@@ -44,6 +44,12 @@ function this.init()
 		["+"] = function()
 			core.scale = core.scale + 1
 		end,
+		["space"] = function()
+			core.player:set_height(core.player:get_height() + 1)
+		end,
+		["lshift"] = function()
+			core.player:set_height(core.player:get_height() - 1)
+		end,
 	}
 
 	local unButtonMap = 

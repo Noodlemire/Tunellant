@@ -36,6 +36,9 @@ local static = {
 			0, core.scale, core.scale)
 	end,
 
+	get_height = function(self)
+		return rawget(self, "height")
+	end,
 	get_hp = function(self)
 		return rawget(self, "hp")
 	end,
@@ -75,6 +78,9 @@ local static = {
 		end
 	end,
 
+	set_height = function(self, height)
+		rawset(self, "height", tonumber(height))
+	end,
 	set_pos = function(self, pos)
 		pos = pos or self:get_pos()
 		rawset(self:get_pos(), "x", tonumber(pos.x or self:get_pos().x))
@@ -102,6 +108,7 @@ function core.actor.new(name, image, x, y, properties, functions, init_func)
 		__newindex = static.newindex,
 		__metatable = {},
 	})
+	properties.height = properties.height or 1
 	properties.yaw = properties.yaw or 0
 	properties.id = #actors + 1
 
@@ -112,6 +119,7 @@ function core.actor.new(name, image, x, y, properties, functions, init_func)
 
 	functions.die = functions.die or static.die
 	functions.draw = functions.draw or static.draw
+	functions.get_height = functions.get_height or static.get_height
 	functions.get_hp = functions.get_hp or static.get_hp
 	functions.get_id = functions.get_id or static.get_id
 	functions.get_image = functions.get_image or static.get_image
@@ -120,6 +128,7 @@ function core.actor.new(name, image, x, y, properties, functions, init_func)
 	functions.get_pos = functions.get_pos or static.get_pos
 	functions.get_yaw = functions.get_yaw or static.get_yaw
 	functions.move = functions.move or static.move
+	functions.set_height = functions.set_height or static.set_height
 	functions.set_hp = functions.get_hp or static.set_hp
 	functions.set_pos = functions.set_pos or static.set_pos
 	functions.set_yaw = functions.set_yaw or static.set_yaw

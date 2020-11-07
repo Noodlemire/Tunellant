@@ -34,10 +34,10 @@ function this.load()
 
 	this.player = loadNewImage("player")
 
+	this.black = loadNewImage("black")
 	this.clay = loadNewImage("clay")
+	this.copper = loadNewImage("copper")
 	this.dirt = loadNewImage("dirt")
-
-	this.stone = loadNewImage("default_stone")
-	this.copper = loadNewImage("default_copper_block")
-	this.iron = loadNewImage("default_steel_block")
+	this.iron = loadNewImage("iron")
+	this.stone = loadNewImage("stone")
 end

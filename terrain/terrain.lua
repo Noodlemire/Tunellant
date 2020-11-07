@@ -25,17 +25,27 @@ local vmap = core.smartVectorTable()
 
 local u = core.utils
 
-local function quadrangle(image, x1, y1, x2, y2, x3, y3, x4, y4)
-	local quad = love.graphics.newMesh({{x1, y1, 0, 1}, {x2, y2, 1, 1}, {x3, y3, 1, 0}, {x4, y4, 0, 0}})
-	quad:setTexture(image)
+local function quadrangle(mesh, x1, y1, x2, y2, x3, y3, x4, y4)
+	mesh:setVertices({{x1, y1, 0, 1}, {x2, y2, 1, 1}, {x3, y3, 1, 0}, {x4, y4, 0, 0}})
 
-	return quad
+	return mesh
 end
 
 local static = {
 	draw = function(self, canvas, v)
 		if self:get_image() then
 			local x, y, z = v.x, v.y, math.ceil(v.z / 2)
+
+			if z - core.player:get_height() > 1 or z - core.player:get_height() < -6 then return end
+
+			local dist = core.utils.distance(core.player:get_pos(), {x=x*16, y=y*16})
+
+			if dist > 240 then return end
+
+			local dir = core.utils.direction(core.player:get_pos(), {x=x*16, y=y*16})
+			local yaw = core.player:get_yaw()
+
+			if dist > 32 and (dir + yaw + 225) % 360 > 90 then return end
 
 			local d1 = not core.terrain.v_get(x + 1, y, v.z)
 			local d2 = not core.terrain.v_get(x - 1, y, v.z)
@@ -45,8 +55,8 @@ local static = {
 
 			if not (d1 or d2 or d3 or d4 or d5) then return end
 
-			local height_offset = 1 + 0.1 * z
-			local depth_offset = height_offset - 0.1
+			local height_offset = 1 + 0.05 * (z - core.player:get_height() + 1)
+			local depth_offset = height_offset - 0.05
 
 			local rel_x, rel_y = x * 16 * core.scale, y * 16 * core.scale
 
@@ -64,23 +74,28 @@ local static = {
 				local h1 = 16 * depth_offset * core.scale
 
 				if d2 and rel_x > core.player:get_pos().x * core.scale then
-					canvas.draw(quadrangle(self:get_image(), b_x, b_y, b_x, b_y + h1, t_x, t_y + h2, t_x, t_y),
+					canvas.draw(quadrangle(self.mesh[2], b_x, b_y, b_x, b_y + h1, t_x, t_y + h2, t_x, t_y),
 						top_x, top_y, 0)
 				elseif d1 and rel_x + 16 * core.scale < core.player:get_pos().x * core.scale then
-					canvas.draw(quadrangle(self:get_image(), b_x + h1, b_y, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x + h2, t_y),
+					canvas.draw(quadrangle(self.mesh[1], b_x + h1, b_y, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x + h2, t_y),
 						top_x, top_y, 0)
 				end
 
 				if d4 and rel_y > core.player:get_pos().y * core.scale then
-					canvas.draw(quadrangle(self:get_image(), b_x + h1, b_y, b_x, b_y, t_x, t_y, t_x + h2, t_y),
+					canvas.draw(quadrangle(self.mesh[4], b_x + h1, b_y, b_x, b_y, t_x, t_y, t_x + h2, t_y),
 						top_x, top_y, 0)
 				elseif d3 and rel_y + 16 * core.scale < core.player:get_pos().y * core.scale then
-					canvas.draw(quadrangle(self:get_image(), b_x, b_y + h1, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x, t_y + h2),
+					canvas.draw(quadrangle(self.mesh[3], b_x, b_y + h1, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x, t_y + h2),
 						top_x, top_y, 0)
 				end
 			elseif d5 then
-				canvas.draw(quadrangle(self:get_image(), t_x, t_y + h2, t_x + h2, t_y + h2, t_x + h2, t_y, t_x, t_y),
-						top_x, top_y, 0)
+				self.mesh[5]:setTexture(self:get_image())
+				canvas.draw(quadrangle(self.mesh[5], t_x, t_y + h2, t_x + h2, t_y + h2, t_x + h2, t_y, t_x, t_y),
+					top_x, top_y, 0)
+			elseif z - core.player:get_height() == 1 then
+				self.mesh[5]:setTexture(core.assets.black)
+				canvas.draw(quadrangle(self.mesh[5], t_x, t_y + h2, t_x + h2, t_y + h2, t_x + h2, t_y, t_x, t_y),
+					top_x, top_y, 0)
 			end
 		end
 	end,
@@ -114,6 +129,8 @@ function core.terrain.new(name, image, hardness, x, y, height)
 		hardness = hardness
 	}, {
 		__index = {
+			mesh = {},
+
 			draw = static.draw,
 			get_hardness = static.get_hardness,
 			get_image = static.get_image,
@@ -123,6 +140,11 @@ function core.terrain.new(name, image, hardness, x, y, height)
 		__newindex = static.newindex,
 		__metatable = {}
 	})
+
+	for i = 1, 5 do
+		terrain.mesh[i] = love.graphics.newMesh({{0, 1, 0, 1}, {1, 1, 1, 1}, {1, 0, 1, 0}, {0, 0, 0, 0}})
+		terrain.mesh[i]:setTexture(image)
+	end
 
 	map.set({x=x, y=y, z=height}, terrain)
 	vmap.set({x=x, y=y, z=height * 2}, terrain)

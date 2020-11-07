@@ -13,11 +13,12 @@ In the future, this game will be about being stuck underground, gathering resour
 
 Controls:
 * Arrow keys: move/strafe
-* A/S: Turn left/right
+* A/D: Turn left/right
 * W: Hold to move/turn faster
 * S: Hold to move/turn slower
 * -: Zoom out
 * =/+: Zoom in (= is used because {shift =} can equate to +)
+* Spacebar/LShift: Jump up/down
 
 -------------------------------------------------------------------------------------------------------------
 Dependencies

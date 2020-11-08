@@ -36,13 +36,13 @@ function this.init()
 	{
 		--[button] = function()
 		["-"] = function()
-			core.scale = math.max(1, core.scale - 1)
+			core.scale = math.max(8, core.scale - 8)
 		end,
 		["="] = function()
-			core.scale = core.scale + 1
+			core.scale = core.scale + 8
 		end,
 		["+"] = function()
-			core.scale = core.scale + 1
+			core.scale = core.scale + 8
 		end,
 		["space"] = function()
 			core.player:set_height(core.player:get_height() + 1)

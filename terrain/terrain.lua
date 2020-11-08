@@ -38,14 +38,14 @@ local static = {
 
 			if z - core.player:get_height() > 1 or z - core.player:get_height() < -6 then return end
 
-			local dist = core.utils.distance(core.player:get_pos(), {x=x*16, y=y*16})
+			local dist = core.utils.distance(core.player:get_pos(), v)
 
-			if dist > 240 then return end
+			if dist > 15 then return end
 
-			local dir = core.utils.direction(core.player:get_pos(), {x=x*16, y=y*16})
+			local dir = core.utils.direction(core.player:get_pos(), v)
 			local yaw = core.player:get_yaw()
 
-			if dist > 32 and (dir + yaw + 225) % 360 > 90 then return end
+			if dist > 2 and (dir + yaw + 225) % 360 > 90 then return end
 
 			local d1 = not core.terrain.v_get(x + 1, y, v.z)
 			local d2 = not core.terrain.v_get(x - 1, y, v.z)
@@ -58,44 +58,44 @@ local static = {
 			local height_offset = 1 + 0.05 * (z - core.player:get_height() + 1)
 			local depth_offset = height_offset - 0.05
 
-			local rel_x, rel_y = x * 16 * core.scale, y * 16 * core.scale
+			local rel_x, rel_y = x * core.scale, y * core.scale
 
-			local top_x = (rel_x - core.player:get_pos().x * core.scale) * height_offset + canvas.getWidth() / 2 - 8
-			local top_y = (rel_y - core.player:get_pos().y * core.scale) * height_offset + canvas.getHeight() / 2 - 8
+			local top_x = (rel_x - core.player:get_pos().x * core.scale) * height_offset
+			local top_y = (rel_y - core.player:get_pos().y * core.scale) * height_offset -- - 8 + canvas.getHeight() / 2 
 
 			local t_x, t_y = 0, 0
-			local h2 = 16 * height_offset * core.scale
+			local h2 = height_offset * core.scale
 
 			if v.z % 2 == 1 then
-				local bot_x = (rel_x - core.player:get_pos().x * core.scale) * depth_offset + canvas.getWidth() / 2 - 8
-				local bot_y = (rel_y - core.player:get_pos().y * core.scale) * depth_offset + canvas.getHeight() / 2 - 8
+				local bot_x = (rel_x - core.player:get_pos().x * core.scale) * depth_offset
+				local bot_y = (rel_y - core.player:get_pos().y * core.scale) * depth_offset
 
 				local b_x, b_y = (bot_x - top_x), (bot_y - top_y)
-				local h1 = 16 * depth_offset * core.scale
+				local h1 = depth_offset * core.scale
 
-				if d2 and rel_x > core.player:get_pos().x * core.scale then
+				if d2 and x > core.player:get_pos().x then
 					canvas.draw(quadrangle(self.mesh[2], b_x, b_y, b_x, b_y + h1, t_x, t_y + h2, t_x, t_y),
-						top_x, top_y, 0)
-				elseif d1 and rel_x + 16 * core.scale < core.player:get_pos().x * core.scale then
+						top_x, top_y, 0, 1, 1, core.scale / 2, core.scale / 2)
+				elseif d1 and x + 1 < core.player:get_pos().x then
 					canvas.draw(quadrangle(self.mesh[1], b_x + h1, b_y, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x + h2, t_y),
-						top_x, top_y, 0)
+						top_x, top_y, 0, 1, 1, core.scale / 2, core.scale / 2)
 				end
 
-				if d4 and rel_y > core.player:get_pos().y * core.scale then
+				if d4 and y > core.player:get_pos().y then
 					canvas.draw(quadrangle(self.mesh[4], b_x + h1, b_y, b_x, b_y, t_x, t_y, t_x + h2, t_y),
-						top_x, top_y, 0)
-				elseif d3 and rel_y + 16 * core.scale < core.player:get_pos().y * core.scale then
+						top_x, top_y, 0, 1, 1, core.scale / 2, core.scale / 2)
+				elseif d3 and y + 1 < core.player:get_pos().y then
 					canvas.draw(quadrangle(self.mesh[3], b_x, b_y + h1, b_x + h1, b_y + h1, t_x + h2, t_y + h2, t_x, t_y + h2),
-						top_x, top_y, 0)
+						top_x, top_y, 0, 1, 1, core.scale / 2, core.scale / 2)
 				end
 			elseif d5 then
 				self.mesh[5]:setTexture(self:get_image())
 				canvas.draw(quadrangle(self.mesh[5], t_x, t_y + h2, t_x + h2, t_y + h2, t_x + h2, t_y, t_x, t_y),
-					top_x, top_y, 0)
+					top_x, top_y, 0, 1, 1, core.scale / 2, core.scale / 2)
 			elseif z - core.player:get_height() == 1 then
 				self.mesh[5]:setTexture(core.assets.black)
 				canvas.draw(quadrangle(self.mesh[5], t_x, t_y + h2, t_x + h2, t_y + h2, t_x + h2, t_y, t_x, t_y),
-					top_x, top_y, 0)
+					top_x, top_y, 0, 1, 1, core.scale / 2, core.scale / 2)
 			end
 		end
 	end,
@@ -123,6 +123,9 @@ function core.terrain.new(name, image, hardness, x, y, height)
 
 	height = height or 0
 
+	local a = -0.95
+	local b = 0.95
+
 	local terrain = setmetatable({
 		name = name,
 		image = image,
@@ -130,6 +133,12 @@ function core.terrain.new(name, image, hardness, x, y, height)
 	}, {
 		__index = {
 			mesh = {},
+			collision = {
+				core.wall(x+a, y+a, x+b, y+a, 270, 1),
+				core.wall(x+b, y+a, x+b, y+b, 0, 1),
+				core.wall(x+b, y+b, x+a, y+b, 90, 1),
+				core.wall(x+a, y+b, x+a, y+a, 180, 1),
+			},
 
 			draw = static.draw,
 			get_hardness = static.get_hardness,
@@ -138,7 +147,7 @@ function core.terrain.new(name, image, hardness, x, y, height)
 		},
 
 		__newindex = static.newindex,
-		__metatable = {}
+		__metatable = false
 	})
 
 	for i = 1, 5 do
@@ -211,14 +220,20 @@ function core.terrain.iterate()
 	end
 end
 
-function core.terrain.v_iterate()
+function core.terrain.v_iterate(layer)
 	local i = 0
 
 	return function()
 		i = i + 1
 
 		if i <= core.terrain.v_size() then
-			return vmap.getVector(i), vmap.getValue(i)
+			while vmap.getVector(i) and vmap.getVector(i).z < layer do
+				i = i + 1
+			end
+
+			if vmap.getVector(i) and vmap.getVector(i).z == layer then
+				return vmap.getVector(i), vmap.getValue(i)
+			end
 		end
 	end
 end

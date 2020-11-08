@@ -31,9 +31,16 @@ local static = {
 
 	draw = function(self, canvas)
 		canvas.draw(self:get_image(),
-			core.player:get_pos().x - core.player:get_pos().x + canvas.getWidth() / 2 - 8,
-			core.player:get_pos().y - core.player:get_pos().y + canvas.getHeight() / 2 - 8,
-			0, core.scale, core.scale)
+			(self:get_pos().x - core.player:get_pos().x) * 16,
+			(self:get_pos().y - core.player:get_pos().y) * 16,
+			self:get_yaw() * math.pi / 180, core.scale / 16, core.scale / 16, 8, 8) --1: 8, 2: 4
+	end,
+
+	draw_overlay = function(self, canvas)
+		canvas.draw(self:get_overlay(),
+			(self:get_pos().x - core.player:get_pos().x) * 16,
+			(self:get_pos().y - core.player:get_pos().y) * 16,
+			self:get_yaw() * math.pi / 180, core.scale / 16, core.scale / 16, 8, 8) --1: 8, 2: 4
 	end,
 
 	get_height = function(self)
@@ -54,6 +61,9 @@ local static = {
 	get_name = function(self)
 		return rawget(self, "name")
 	end,
+	get_overlay = function(self)
+		return rawget(self, "image_over")
+	end,
 	get_pos = function(self)
 		return rawget(self, "pos")
 	end,
@@ -62,9 +72,53 @@ local static = {
 	end,
 
 	move = function(self, dist, dir)
-		local pos = {x = self:get_pos().x, y = self:get_pos().y}
-		pos.x = pos.x + dist * core.utils.d_cos((dir or self:get_yaw()))
-		pos.y = pos.y + dist * core.utils.d_sin((dir or self:get_yaw()))
+		--The position that the player will move towards if unhindered
+		local pos = {
+			x = self:get_pos().x + dist * core.utils.d_cos(dir or self:get_yaw()),
+			y = self:get_pos().y + dist * core.utils.d_sin(dir or self:get_yaw())
+		}
+
+		local xdist = dist
+		local ydist = dist
+
+		local xpos = {
+			x = self:get_pos().x + dist * core.utils.d_cos(dir or self:get_yaw()),
+			y = self:get_pos().y
+		}
+
+		local ypos = {
+			x = self:get_pos().x,
+			y = self:get_pos().y + dist * core.utils.d_sin(dir or self:get_yaw())
+		}
+
+		for i = 1, #core.utils.NEIGHBORS9 do
+			local npos = core.utils.copy(self:get_pos())
+			npos.x = npos.x + core.utils.NEIGHBORS9[i].x
+			npos.y = npos.y + core.utils.NEIGHBORS9[i].y
+
+			local terra = core.terrain.get(npos.x, npos.y, self:get_height())
+
+			if terra then
+				local mindist = dist
+				local closest_wall = nil
+
+				for c = 1, #terra.collision do
+					if core.utils.line_intersects(self:get_pos(), pos, terra.collision[c].p1, terra.collision[c].p2) then
+						local newdist = core.utils.distance_point_line(self:get_pos(), terra.collision[c].p1, terra.collision[c].p2)
+
+						if newdist < mindist then
+							mindist = newdist
+							closest_wall = terra.collision[c]
+						end
+					end
+				end
+
+				if closest_wall then
+					closest_wall:push(self, pos)
+				end
+			end
+		end
+
 		self:set_pos(pos)
 
 		return self
@@ -99,11 +153,12 @@ local static = {
 
 
 
-function core.actor.new(name, image, x, y, properties, functions, init_func)
+function core.actor.new(name, image, image_over, x, y, properties, functions, init_func)
 	properties = properties or {}
 
 	properties.name = tostring(name)
 	properties.image = image
+	properties.image_over = image_over
 	properties.pos = setmetatable({x = tonumber(x), y = tonumber(y)}, {
 		__newindex = static.newindex,
 		__metatable = {},
@@ -119,12 +174,14 @@ function core.actor.new(name, image, x, y, properties, functions, init_func)
 
 	functions.die = functions.die or static.die
 	functions.draw = functions.draw or static.draw
+	functions.draw_overlay = functions.draw_overlay or static.draw_overlay
 	functions.get_height = functions.get_height or static.get_height
 	functions.get_hp = functions.get_hp or static.get_hp
 	functions.get_id = functions.get_id or static.get_id
 	functions.get_image = functions.get_image or static.get_image
 	functions.get_max_hp = functions.get_max_hp or static.get_max_hp
 	functions.get_name = functions.get_name or static.get_name
+	functions.get_overlay = functions.get_overlay or static.get_overlay
 	functions.get_pos = functions.get_pos or static.get_pos
 	functions.get_yaw = functions.get_yaw or static.get_yaw
 	functions.move = functions.move or static.move
@@ -157,17 +214,17 @@ function core.actor.get(id)
 	return actors[id]
 end
 
-function core.actor.iterate()
+function core.actor.iterate(layer)
 	local i = 0
 
 	return function()
 		i = i + 1
 
-		while not core.actor.get(i) and i < core.actor.count() do
+		while (core.actor.get(i) and layer and core.actor.get(i):get_height() < layer) or (core.actor.get(i) and i < core.actor.count()) do
 			i = i + 1
 		end
 
-		if core.actor.get(i) then
+		if core.actor.get(i) and (not layer or core.actor.get(i):get_height() == layer) then
 			return i, core.actor.get(i)
 		end
 	end

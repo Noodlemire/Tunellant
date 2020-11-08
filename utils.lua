@@ -29,6 +29,18 @@ core.utils.NEIGHBORS5 = {
 	{x = 0, y = 0, z = 1},
 }
 
+core.utils.NEIGHBORS9 = {
+	{x = -1, y = -1, z = 0},
+	{x = 0, y = -1, z = 0},
+	{x = 1, y = -1, z = 0},
+	{x = -1, y = 0, z = 0},
+	{x = 0, y = 0, z = 0},
+	{x = 1, y = 0, z = 0},
+	{x = -1, y = 1, z = 0},
+	{x = 0, y = 1, z = 0},
+	{x = 1, y = 1, z = 0},
+}
+
 
 
 function core.utils.copy(t)
@@ -63,6 +75,40 @@ end
 
 function core.utils.distance(p1, p2)
 	return math.sqrt((p2.x - p1.x)^2 + (p2.y - p1.y)^2)
+end
+
+function core.utils.distance_point_line(p0, lp1, lp2)
+	return math.abs((lp2.y - lp1.y) * p0.x - (lp2.x - lp1.x) * p0.y + lp2.x * lp1.y - lp2.y * lp1.x) / core.utils.distance(lp1, lp2)
+end
+
+function core.utils.point_on_line(p0, lp1, lp2)
+	return math.min(lp1.x, lp2.x) <= p0.x and p0.x <= math.max(lp1.x, lp2.x) and math.min(lp1.y, lp2.y) <= p0.y and p0.y <= math.max(lp1.y, lp2.y)
+end
+
+function core.utils.point_orientation(a, b, c)
+	local ori = (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y)
+
+	if ori < 0 then
+		return -1
+	elseif ori > 0 then
+		return 1
+	else
+		return 0
+	end
+end
+
+function core.utils.line_intersects(a1, a2, b1, b2)
+	local o1 = core.utils.point_orientation(b1, b2, a1)
+	local o2 = core.utils.point_orientation(b1, b2, a2)
+	local o3 = core.utils.point_orientation(a1, a2, b1)
+	local o4 = core.utils.point_orientation(a1, a2, b2)
+
+	return --(o1 ~= o2 and o3 ~= o4) or
+			(((o1 < 0 and o2 > 0) or (o1 > 0 and o2 < 0)) and ((o3 < 0 and o4 > 0) or (o3 > 0 and o4 < 0))) or
+			(o1 == 0 and core.utils.point_on_line(a1, a2, b1)) or
+			(o2 == 0 and core.utils.point_on_line(a1, b2, b1)) or
+			(o3 == 0 and core.utils.point_on_line(a2, a1, b2)) or
+			(o4 == 0 and core.utils.point_on_line(a2, b1, b2))
 end
 
 function core.utils.round(n)

@@ -33,6 +33,7 @@ function this.load()
 	this.grid = loadNewImage("grid")
 
 	this.player = loadNewImage("player")
+	this.player_xray = loadNewImage("player_xray")
 
 	this.black = loadNewImage("black")
 	this.clay = loadNewImage("clay")

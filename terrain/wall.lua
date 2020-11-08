@@ -19,9 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 
 local static = {
 	push = function(self, actor, pos)
-		--local apos = core.utils.copy(pos)
-		--apos.x = apos.x / 16
-		--apos.y = apos.y / 16
 
 		local dist = core.utils.distance_point_line(pos, self.p1, self.p2)
 

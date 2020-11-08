@@ -93,8 +93,6 @@ end
 function love.update(dt)
 	if paused then return end
 
-	core.collide = "false"
-
 	for _, a in actor.iterate() do
 		a:on_step()
 	end
@@ -104,7 +102,6 @@ function love.draw()
 	local width = love.graphics.getWidth()
 	local height = love.graphics.getHeight()
 
-	--graphs.translate(-16, -16)
 
 	--rotate around the center of the screen according to the player's direction
 	graphs.translate(width/2, height/2)
@@ -150,7 +147,7 @@ function love.draw()
 	graphs.rotate(core.player:get_yaw() * math.pi / 180)
 	graphs.translate(-width/2, -height/2)
 
-	core.print("{x="..core.player:get_pos().x..", y="..core.player:get_pos().y.."} FPS: "..love.timer.getFPS().." collide: "..core.collide)
+	core.print("{x="..core.player:get_pos().x..", y="..core.player:get_pos().y.."} FPS: "..love.timer.getFPS())
 
 	graphs.print(text)
 end
